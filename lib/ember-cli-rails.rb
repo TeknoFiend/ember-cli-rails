@@ -5,9 +5,9 @@ module EmberCLI
 
   autoload :App,           "ember-cli/app"
   autoload :Configuration, "ember-cli/configuration"
-  autoload :ViewHelpers,   "ember-cli/view_helpers"
   autoload :Helpers,       "ember-cli/helpers"
   autoload :Middleware,    "ember-cli/middleware"
+  autoload :PathSet,       "ember-cli/path_set"
 
   def configure
     yield configuration
@@ -17,8 +17,16 @@ module EmberCLI
     Configuration.instance
   end
 
-  def get_app(name)
-    configuration.apps[name]
+  def app(name)
+    apps.fetch(name) do
+      fail KeyError, "#{name.inspect} app is not defined"
+    end
+  end
+
+  alias_method :[], :app
+
+  def skip?
+    ENV["SKIP_EMBER"].present?
   end
 
   def prepare!
@@ -31,10 +39,7 @@ module EmberCLI
 
   def enable!
     prepare!
-
-    if Helpers.use_middleware?
-      Rails.configuration.middleware.use Middleware
-    end
+    append_middleware unless env.production?
   end
 
   def install_dependencies!
@@ -69,6 +74,12 @@ module EmberCLI
     @root ||= Rails.root.join("tmp", "ember-cli-#{uid}")
   end
 
+  def env
+    @env ||= Helpers.current_environment.inquiry
+  end
+
+  delegate :apps, to: :configuration
+
   private
 
   def uid
@@ -80,6 +91,10 @@ module EmberCLI
   end
 
   def each_app
-    configuration.apps.each{ |name, app| yield app }
+    apps.each{ |name, app| yield app }
+  end
+
+  def append_middleware
+    Rails.configuration.middleware.use Middleware
   end
 end
