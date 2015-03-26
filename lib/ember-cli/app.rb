@@ -223,7 +223,7 @@ module EmberCLI
 
     def env_hash
       ENV.clone.tap do |vars|
-        vars.store "DISABLE_FINGERPRINTING", "true"
+        vars.store "DISABLE_FINGERPRINTING", "false"
         vars.store "EXCLUDE_EMBER_ASSETS", excluded_ember_deps
         vars.store "BUNDLE_GEMFILE", gemfile_path.to_s if gemfile_path.exist?
       end
